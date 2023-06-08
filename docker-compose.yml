@@ -1,0 +1,21 @@
+version: '2'
+services:
+    bot:
+        build: .
+        ports:
+            - "8000:8000"
+        volumes:
+            - .:/app
+        links:
+            - db
+        environment:
+            - REMINDER_BOT_CONNECTION_STRING=postgresql://postgres:hunter2@db/reminder_bot_db
+
+    db:
+        image: "postgres:9.6"
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: "reminder_bot_db"
+            POSTGRES_USER: "postgres"
+            POSTGRES_PASSWORD: "hunter2"
