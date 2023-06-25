@@ -8,6 +8,7 @@ from sqlalchemy_utils.functions import database_exists, create_database
 
 # идентификатор бота
 API_TOKEN = os.getenv('REMINDER_BOT_API_TOKEN', default='5957265855:AAGjxqDh-XqfUVFfIY6WdtjIt2OWhdFwQuA')
+DEFAULT_RECEIVER_CHAT_ID = os.getenv('RECEIVER_CHAT_ID', default=0)
 
 # путь к базе данных
 DATABASE_CONNECTION_STRING = os.getenv('REMINDER_BOT_CONNECTION_STRING', default='sqlite:///jobs.db')
@@ -24,10 +25,20 @@ DEVELOPER_CHAT_ID = '5235429783:AAFT8GrhRazJalixcmwr2TNZOT-I0LZKICg'
 
 (
     START_DIALOG,
-    CANCEL,
+    SELECTING_ACTION,
+    ADD_REMIND,
+    SHOW_MY_REMIND,
+    CANCEL_REMIND,
+    CANCEL_ALL_MY_REMIND,
+    CONFIRM_CANCELLATION,
+    UNCONFIRM_CANCELLATION,
+    PARSE_REMIND,
+    STOPPING,
     BACK
-) = map(chr, range(0, 3))
+) = map(chr, range(0, 11))
 END = ConversationHandler.END
+
+RECEIVER_ID = "RECEIVER_ID"
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.ERROR)
 logger = logging.getLogger(__name__)
