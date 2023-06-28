@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Never
+from typing import Never, cast, Tuple
 
 from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, Job, ExtBot, ConversationHandler, CommandHandler, CallbackQueryHandler, \
     InvalidCallbackData, MessageHandler, filters
 
+import message_receiver
 from get_jobs import get_jobs
 from config import CANCEL_REMIND, BACK, logger, START_DIALOG, SELECTING_ACTION, END, ADD_REMIND, SHOW_MY_REMIND, \
     CANCEL_ALL_MY_REMIND, CONFIRM_CANCELLATION, UNCONFIRM_CANCELLATION, PARSE_REMIND, STOPPING, RECEIVER_ID
@@ -52,7 +53,7 @@ async def parse_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> st
         await update.message.reply_text(text=validation_result.message)
         return await adding_remind(update, context)
 
-    chat_id = context.user_data[RECEIVER_ID]
+    chat_id = message_receiver.try_get_receiver_id(context)
     try:
         data = {
             "from_chat_id": update.effective_chat.id,
@@ -68,14 +69,14 @@ async def parse_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> st
         logger.exception(e)
     return str(SELECTING_ACTION)
 async def show_my_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> [None|str]:
-    jobs = get_jobs(update.effective_user.id, context.job_queue)
+    jobs = get_jobs(update.effective_user.id, context.job_queue.jobs())
     if len(jobs) == 0:
         text = "Нет активных напоминаний!!!"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
         return None
 
     for job in jobs:
-        await print_job(job, context.bot)
+        await print_job(job, update.effective_chat.id, context.bot)
 
     return None
 
@@ -142,8 +143,13 @@ async def cancel_job(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         logger.exception(f"Exception raised in {cancel_job.__name__}. exception: {str(e)}")
     return None#await self.start(update, context)
 
-
+def is_cancel_data(data: object) -> bool:
+    command = ''
+    if isinstance(data, tuple):
+        command, _ = cast(Tuple[chr, str], data)
+    return command == CANCEL_REMIND
 def create_conversation_handler() -> ConversationHandler:
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={

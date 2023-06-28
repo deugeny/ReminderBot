@@ -8,7 +8,8 @@ from sqlalchemy_utils.functions import database_exists, create_database
 
 # идентификатор бота
 API_TOKEN = os.getenv('REMINDER_BOT_API_TOKEN', default='5957265855:AAGjxqDh-XqfUVFfIY6WdtjIt2OWhdFwQuA')
-DEFAULT_RECEIVER_CHAT_ID = os.getenv('RECEIVER_CHAT_ID', default=0)
+DEFAULT_RECEIVER_CHAT_ID = os.getenv('RECEIVER_CHAT_ID', default=-883505711)
+ENABLED_RECEIVER_SELECTION = os.getenv('ENABLED_RECEIVER_SELECTION', default=False)
 
 # путь к базе данных
 DATABASE_CONNECTION_STRING = os.getenv('REMINDER_BOT_CONNECTION_STRING', default='sqlite:///jobs.db')
