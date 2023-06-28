@@ -7,9 +7,9 @@ from telegram.ext import ContextTypes, Job, ExtBot, ConversationHandler, Command
     InvalidCallbackData, MessageHandler, filters
 
 import message_receiver
-from get_jobs import get_jobs
 from config import CANCEL_REMIND, BACK, logger, START_DIALOG, SELECTING_ACTION, END, ADD_REMIND, SHOW_MY_REMIND, \
-    CANCEL_ALL_MY_REMIND, CONFIRM_CANCELLATION, UNCONFIRM_CANCELLATION, PARSE_REMIND, STOPPING, RECEIVER_ID
+    CANCEL_ALL_MY_REMIND, CONFIRM_CANCELLATION, UNCONFIRM_CANCELLATION, PARSE_REMIND, STOPPING
+from get_jobs import get_jobs
 from parsing import find_scheduling_datetime
 from start_handler import start, stop
 from validation import Validation, ValidationKey
@@ -67,7 +67,7 @@ async def parse_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> st
     except Exception as e:
         await update.message.reply_text(text='Ошибка добавления напоминания')
         logger.exception(e)
-    return str(SELECTING_ACTION)
+    return await adding_remind(update, context)
 async def show_my_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> [None|str]:
     jobs = get_jobs(update.effective_user.id, context.job_queue.jobs())
     if len(jobs) == 0:
@@ -84,12 +84,12 @@ async def show_my_remind(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def print_job(printing_job: "Job", chat_id: int, bot: ExtBot) -> Message:
     def datetime_repr(date: datetime | None) -> str:
         return date.strftime('%H:%M:%S %Z %d-%m-%Y') if date else 'Не указано'
-
+    job_text = printing_job.data["text"]
     text = (
         f'⏰ Напоминание: <b>#{printing_job.job.name}</b>'
         f'\nЗапуск в: <b>{datetime_repr(printing_job.job.next_run_time)}</b>'
         '\n---------------------------------------------------------------------------'
-        f'\n<pre>{printing_job.data["text"]}</pre>')
+        f'\n<pre>{job_text}</pre>')
     buttons = [[InlineKeyboardButton(text="Отменить", callback_data=(CANCEL_REMIND, printing_job.name))]]
     keyboard = InlineKeyboardMarkup(buttons)
     return await bot.send_message(chat_id=chat_id,
@@ -136,7 +136,6 @@ async def cancel_job(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         for job in jobs:
             job.schedule_removal()
         text = update.callback_query.message.text
-        buttons = [[InlineKeyboardButton(text="«Назад", callback_data=str(BACK))]]
         await update.callback_query.message.edit_text(text=f"<s>{text}</s>", reply_markup=None, parse_mode=ParseMode.HTML)
 
     except Exception as e:
